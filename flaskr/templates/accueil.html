@@ -37,11 +37,8 @@
         <p><form method="post" action="/graphs_velage">
         <p><label for="famille">Choisissez une famille à analyser : </label>
         <! insertion d'une liste déroulante>
-            <select name="famille_velage" id="famille_velage">
-            <option value="">Choisissez une option</option>
-            <option value="holstein">Holstein</option>
-            <option value="jersey">Jersey</option>
-            <option value="blanc-bleu-neige">Blanc Bleu Neige</option>
+            <input tpye="texte" name="famille_velage" id="famille_velage"
+            minlength="4" maxlength="8" size="10">
             </select></p>
     
         <! insertion d'un calendrier>
