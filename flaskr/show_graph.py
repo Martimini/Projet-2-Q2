@@ -39,9 +39,6 @@ def lune(date_and_id, debut, fin):
         else: unmooned.append(id)
     return {'Pleine Lune':mooned, 'Lune incomplète':unmooned}
 
-# Les deux fonctions get_graph_lune() et get_graph_velage() sont extrêment similaire c'est pourquoi c'est en cours
-# de projet de les rassemblé sous une seule et même fonction qui prend en input la fonction calculatrice
-# Par manque de temps cela n'est pas encore fait et sera après les premières review
 @bp.route('/graphs_lune', methods=('GET', 'POST'))
 def get_graph_lune():
     """
@@ -52,16 +49,15 @@ def get_graph_lune():
         date_fin = request.form['fin_lune']
         famille = request.form['famille_lune']
 
-        
         data = cursor.execute('SELECT date, id FROM velages')
-        if famille is None:
+        if famille == "":
             dic = lune(data, date_debut, date_fin)
         else:
             validated_data = []
             for i in data:
-                animal_id = cursor.execute('SELECT animal_id FROM animaux_velages WHERE velage_id = ?', (i[1],))
-                famille_id = cursor.execute('SELECT famille_id FROM animaux WHERE id = ?', (animal_id,))
-                famille_nom = cursor.execute('SELECT nom FROM familles WHERE id = ?', (famille_id,))
+                animal_id = cursor.execute('SELECT animal_id FROM animaux_velages WHERE velage_id = ?', (i[1],)).fetchone()
+                famille_id = cursor.execute('SELECT famille_id FROM animaux WHERE id = ?', (animal_id[0],)).fetchone()
+                famille_nom = cursor.execute('SELECT nom FROM familles WHERE id = ?', (famille_id[0],)).fetchone()
                 if famille_nom == famille:
                     validated_data.append(i)
             dic = lune(validated_data, date_debut, date_fin)
@@ -85,7 +81,6 @@ def velages(date_and_id, debut, fin):
     counting = {}
     for row in date_and_id:
         date = row[0]
-        ID = row[1]
         if isSmaller(debut,date) and isSmaller(date,fin):
             counting[date] = counting.get(date, 0) + 1
     return counting
@@ -99,6 +94,7 @@ def get_graph_velage():
         date_debut = request.form['debut_velage']
         date_fin = request.form['fin_velage']
         famille = request.form['famille_velage']
+
         data = cursor.execute('SELECT date, id FROM velages')
         if famille == "":
             dic = velages(data, date_debut, date_fin)
@@ -108,14 +104,13 @@ def get_graph_velage():
                 animal_id = cursor.execute('SELECT animal_id FROM animaux_velages WHERE velage_id = ?', (i[1],)).fetchone()
                 famille_id = cursor.execute('SELECT famille_id FROM animaux WHERE id = ?', (animal_id[0],)).fetchone()
                 famille_nom = cursor.execute('SELECT nom FROM familles WHERE id = ?', (famille_id[0],)).fetchone()
-                print(famille_nom[0])
                 if famille_nom[0] == famille:
                     validated_data.append(i)
             dic = velages(validated_data, date_debut, date_fin)
+
         keys = dic.keys()
         values = dic.values()
         error = "Aucune donnée" if dic == {} else None
-        print(dic)
         if error is None:
             label = "Période"
             return render_template('graph.html', keys=keys, values=values, name=label)
@@ -162,14 +157,13 @@ def get_graph_races():
             pourcentage.append(bbn_pourcentage)
 
      
-        data = cursor.execute('SELECT pourcentage, type_id FROM animaux_types')
+        data = cursor.execute('SELECT pourcentage, type_id FROM animaux_types').fetchall()
         dic = show_races(data, races, pourcentage)
         keys = dic.keys()
         values = dic.values()
         error = "Aucune donnée" if dic == {} else None
         if error is None:
             label = "Races"
-            # TODO : afficher le graph avec le dic
             return render_template('graph.html', keys=keys, values=values, name=label)
         else:
             flash(error)
